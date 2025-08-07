@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Books</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url('arts.webp') no-repeat center center fixed;
+      background-size: cover;
+      background-color: rgba(255,255,255,0.85);
+      background-blend-mode: lighten;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #searchInput {
+      display: block;
+      margin: 10px auto;
+      padding: 8px;
+      font-size: 16px;
+      width: 300px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    #noData {
+      text-align: center;
+      font-weight: bold;
+      color: red;
+      margin-top: 20px;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="title">Department Books</h1>
+  <input type="text" id="searchInput" placeholder="Search by Title or Author..." />
+  <div id="noData" style="display:none;">No records found</div>
+  <table id="booksTable">
+    <thead>
+      <tr>
+        <th>Acc No</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Year</th>
+        <th>Price</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div class="footer">
+    &copy; 2025 SELVAMURUGAN S. All rights reserved.
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const dept = params.get("department") || "";
+    document.getElementById("title").textContent = dept ? `Books - ${dept}` : "All Books";
+    let allBooks = [];
+
+    async function loadData() {
+      try {
+        const response = await fetch("excel-to-json.json");
+        const data = await response.json();
+        allBooks = data.Sheet1;
+        if (dept) {
+          allBooks = allBooks.filter(b => b.Department && b.Department.toUpperCase() === dept.toUpperCase());
+        }
+        renderTable(allBooks);
+      } catch (e) {
+        console.error("Error loading JSON", e);
+      }
+    }
+
+    function renderTable(books) {
+      const tbody = document.querySelector("#booksTable tbody");
+      const noData = document.getElementById("noData");
+      tbody.innerHTML = "";
+      if (books.length === 0) {
+        noData.style.display = "block";
+        return;
+      }
+      noData.style.display = "none";
+      books.forEach(book => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${book.Acc_No || ""}</td>
+          <td>${book.Title || ""}</td>
+          <td>${book.Author1 || ""}</td>
+          <td>${book.Year_of_Pub || ""}</td>
+          <td>${book.Price || ""}</td>
+          <td>${book.Status || ""}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      const q = this.value.toLowerCase();
+      const filtered = allBooks.filter(book =>
+        (book.Title && book.Title.toLowerCase().includes(q)) ||
+        (book.Author1 && book.Author1.toLowerCase().includes(q))
+      );
+      renderTable(filtered);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
